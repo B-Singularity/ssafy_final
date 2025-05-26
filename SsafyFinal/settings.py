@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
-    'corsheaders', # CORS (Cross-Origin Resource Sharing) 처리
+    'corsheaders', # CORS 처리 앱
 
     'django.contrib.admin',
     'django.contrib.auth',
@@ -55,14 +55,17 @@ INSTALLED_APPS = [
 AUTH_USER_MODEL = 'account.Users' # 사용자 정의 User 모델 지정
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware', # 가능한 가장 위에 위치
-    'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware', # [정리] 가능한 가장 위에 위치 (중복 제거)
+    'django.middleware.security.SecurityMiddleware', # [정리] 중복 제거
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # 아래 중복된 미들웨어 항목들은 제거했습니다.
+    # 'corsheaders.middleware.CorsMiddleware', 
+    # 'django.middleware.security.SecurityMiddleware',
 ]
 
 ROOT_URLCONF = 'SsafyFinal.urls'
@@ -181,6 +184,7 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1), # 슬라이딩 토큰 리프레시 토큰 유효 기간
 }
 
+# [정리] Git 충돌 해결 및 CORS, GOOGLE_CLIENT_ID 설정 부분
 # CORS 설정 (Cross-Origin Resource Sharing)
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',  # Vue.js 개발 서버 주소 (Vite 기본값, 실제 사용하는 포트로 변경)
@@ -191,8 +195,12 @@ CORS_ALLOWED_ORIGINS = [
 # 예: 'https://your-frontend-domain.com'
 
 # CORS_ALLOW_CREDENTIALS = True # 쿠키 기반 인증 시 필요할 수 있음 (JWT에서는 보통 False)
-# CORS_ALLOW_ALL_ORIGINS = False # True로 설정하면 모든 출처를 허용 (개발 중 테스트 용도, 보안에 유의)
 
-# Google OAuth Client ID (백엔드에서 토큰 검증 시 필요할 수 있음)
+# 개발 중 모든 출처를 허용하려면 아래 주석을 해제 (보안에 유의, 배포 시에는 반드시 False 또는 제거)
+# CORS_ALLOW_ALL_ORIGINS = True 
+
+# Google OAuth Client ID (백엔드에서 토큰 검증 시 필요)
+# Vue.js에서 사용한 Client ID와 동일한 Google Cloud Console의 "웹 애플리케이션"용 ID여야 합니다.
 GOOGLE_CLIENT_ID = "24120708973-o7fr06vmr3qdhvf6h6mb6mjp3gfhttim.apps.googleusercontent.com"
-# 이 ID는 환경 변수로 관리하는 것이 좋습니다. (예: os.environ.get('GOOGLE_CLIENT_ID'))
+# 위 값은 예시이므로, 실제 Google Cloud Console에서 발급받은 정확한 클라이언트 ID로 교체해야 합니다.
+# 환경 변수로 관리하는 것을 권장합니다. (예: os.environ.get('GOOGLE_CLIENT_ID'))
