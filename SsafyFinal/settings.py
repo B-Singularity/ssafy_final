@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
+    'corsheaders',
 
     'django.contrib.admin',
     'django.contrib.auth',
@@ -59,6 +60,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.security.SecurityMiddleware',
 ]
 
 ROOT_URLCONF = 'SsafyFinal.urls'
@@ -176,3 +179,12 @@ SIMPLE_JWT = {
     # 아래는 선택적 설정 (커스텀 클레임 등)
     # 'CLAIMS_SERIALIZER': 'path.to.MyTokenClaimsSerializer',
 }
+
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5173',  # [수정/추가] Vue.js 개발 서버 주소
+    'http://127.0.0.1:5173', # [수정/추가] 경우에 따라 필요한 Vue.js 개발 서버 주소
+]
+
+CORS_ALLOW_ALL_ORIGINS = True 
+
+GOOGLE_CLIENT_ID = "24120708973-o7fr06vmr3qdhvf6h6mb6mjp3gfhttim.apps.googleusercontent.com"

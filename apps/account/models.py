@@ -1,7 +1,8 @@
+# apps/account/models.py
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 
-
+# UserManager는 변경 사항 없음 (기존 코드 유지)
 class UserManager(BaseUserManager):
     def create_user(self, email_address, nickname, password=None, **extra_fields):
         if not email_address:
@@ -15,13 +16,13 @@ class UserManager(BaseUserManager):
         if password:
             user.set_password(password)
         else:
-            user.set_unusable_password()
+            user.set_unusable_password() # 소셜 로그인 사용자는 비밀번호를 사용 안 함으로 설정 가능
 
         user.save(using=self._db)
         return user
 
     def create_superuser(self, email_address, nickname, password=None, **extra_fields):
-        extra_fields.setdefault('is_staff', True)  # 슈퍼유저는 스태프 권한을 가짐
+        extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_active', True)
 
@@ -29,7 +30,7 @@ class UserManager(BaseUserManager):
             raise ValueError('Superuser must have is_staff=True.')
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('Superuser must have is_superuser=True.')
-        if not password:
+        if not password: # 슈퍼유저는 비밀번호가 필요함
             raise ValueError('Superuser creation requires a password.')
 
         return self.create_user(email_address, nickname, password, **extra_fields)
@@ -37,14 +38,17 @@ class UserManager(BaseUserManager):
 
 class Users(AbstractBaseUser, PermissionsMixin):
     id = models.AutoField(primary_key=True)
-    email_address = models.EmailField(unique=True, max_length=254)
+    email_address = models.EmailField(unique=True, max_length=254) # Google 이메일을 저장
     nickname = models.CharField(max_length=100, unique=True)
 
     is_staff = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True) # Google 로그인 시 이 필드가 True인지 확인 필요
 
-    last_login_at = models.DateTimeField(null=True, blank=True)
+    last_login_at = models.DateTimeField(null=True, blank=True) # 로그인 시간 기록
     created_at = models.DateTimeField(auto_now_add=True)
+
+    # [선택적 추가 고려] Google 프로필 사진 URL 등을 저장하고 싶다면 여기에 필드 추가
+    # profile_picture_url = models.URLField(max_length=2048, null=True, blank=True)
 
     objects = UserManager()
 
@@ -71,9 +75,11 @@ class UserSocialAccounts(models.Model):
     user = models.ForeignKey(Users, on_delete=models.CASCADE, related_name="social_accounts")
     PROVIDER_CHOICES = [
         ('google', 'Google'),
+        # 다른 소셜 프로바이더 추가 가능
     ]
-    provider = models.CharField(max_length=50, choices=PROVIDER_CHOICES, default='google')
-    provider_account_id = models.CharField(max_length=255)
+    provider = models.CharField(max_length=50, choices=PROVIDER_CHOICES, default='google') # [확인] 'google'로 저장
+    provider_account_id = models.CharField(max_length=255) # [확인] Google의 'sub' ID 저장
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
