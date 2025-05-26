@@ -13,7 +13,7 @@ app.use(router); // <--- 이 라인 반드시 있어야 함 (Pinia 다음에 오
 
 // Google Login 플러그인 등록
 app.use(vue3GoogleLogin, {
-  clientId: '928177525574-oqi4j5f28v8818anbhvecbhbp1vfq48v.apps.googleusercontent.com'
+  clientId: '24120708973-o7fr06vmr3qdhvf6h6mb6mjp3gfhttim.apps.googleusercontent.com'
 });
 
 app.mount('#app');

@@ -1,7 +1,7 @@
 <template>
-  <div class="movie-card">
+  <div class="movie-card" @click="navigateToDetail">
     <div class="poster-container">
-      <img :src="movie.poster_image" :alt="movie.title" class="movie-poster" />
+      <img :src="movie.poster_path" :alt="movie.title || '영화 포스터'" class="movie-poster" />
       <button
         class="wishlist-btn"
         @click.stop="toggleWishlist"
@@ -12,7 +12,7 @@
       </button>
       <div class="overlay">
         <h3 class="movie-title">{{ movie.title }}</h3>
-        <button class="detail-btn">자세히 보기</button>
+        <button class="detail-btn" @click.stop="navigateToDetail">자세히 보기</button>
       </div>
     </div>
   </div>
@@ -20,26 +20,29 @@
 
 <script setup>
 import { computed } from 'vue';
-import { useAuthStore } from '@/stores/auth'; // auth 스토어 임포트
+import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/stores/auth';
 
 const props = defineProps({
   movie: {
     type: Object,
     required: true
   },
-  // 이 prop은 WishlistView에서 사용될 때 이미 찜된 상태임을 명시적으로 전달합니다.
   isWishlisted: {
     type: Boolean,
     default: false
   }
 });
 
-const emit = defineEmits(['toggle-wishlist']); // 찜하기 토글 이벤트를 상위 컴포넌트로 전달
+const emit = defineEmits(['toggle-wishlist']);
 
 const authStore = useAuthStore();
+const router = useRouter();
 
-// 영화가 현재 찜 목록에 있는지 여부를 계산된 속성으로 확인
 const isWishlistedComputed = computed(() => {
+  if (!props.movie || typeof props.movie.id === 'undefined') {
+    return false;
+  }
   return authStore.isMovieInWishlist(props.movie.id);
 });
 
@@ -48,20 +51,36 @@ const toggleWishlist = async () => {
     alert('찜하기 기능을 사용하려면 로그인해야 합니다.');
     return;
   }
-  // Pinia 스토어의 액션 호출
+  if (!props.movie || typeof props.movie.id === 'undefined') {
+    console.error('찜하기 위한 영화 ID가 없습니다.');
+    return;
+  }
   if (isWishlistedComputed.value) {
     await authStore.removeMovieFromWishlist(props.movie.id);
   } else {
     await authStore.addMovieToWishlist(props.movie.id);
   }
-  emit('toggle-wishlist', props.movie); // 상위 컴포넌트에 변경 사항 알림 (WishlistView에서 사용)
+  emit('toggle-wishlist', props.movie);
+};
+
+// 영화 상세 페이지로 이동하는 함수
+const navigateToDetail = () => {
+  if (props.movie && typeof props.movie.id !== 'undefined') {
+    // 중요: 아래 'MovieDetail'과 'id'는 예시입니다.
+    // 실제 Vue Router 설정에 맞게 라우트 이름과 파라미터 이름을 수정하세요.
+    // 예: src/router/index.js 파일 확인
+    router.push({ name: 'MovieDetail', params: { id: props.movie.id.toString() } });
+    // 만약 파라미터가 숫자가 아닌 문자열이어야 한다면 .toString()을 추가하는 것이 안전합니다.
+  } else {
+    console.error('영화 상세 정보로 이동하기 위한 ID가 없습니다.');
+  }
 };
 </script>
 
 <style scoped>
 .movie-card {
   width: 100%;
-  max-width: 250px; /* 카드 최대 너비 설정 */
+  max-width: 250px;
   background-color: #1a1a1a;
   border-radius: 12px;
   overflow: hidden;
@@ -69,7 +88,7 @@ const toggleWishlist = async () => {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   cursor: pointer;
   position: relative;
-  aspect-ratio: 2/3; /* 포스터 비율 유지 */
+  aspect-ratio: 2/3;
 }
 
 .movie-card:hover {
@@ -90,6 +109,7 @@ const toggleWishlist = async () => {
   object-fit: cover;
   display: block;
   transition: transform 0.3s ease;
+  background-color: #2a2a2a;
 }
 
 .movie-card:hover .movie-poster {
@@ -109,7 +129,7 @@ const toggleWishlist = async () => {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  min-height: 50%; /* 오버레이가 카드 높이의 절반을 차지하도록 */
+  min-height: 50%;
 }
 
 .movie-card:hover .overlay {
@@ -140,7 +160,6 @@ const toggleWishlist = async () => {
   background-color: #e05e5e;
 }
 
-/* 찜하기 버튼 */
 .wishlist-btn {
   position: absolute;
   top: 10px;
@@ -165,7 +184,7 @@ const toggleWishlist = async () => {
 }
 
 .wishlist-btn.wishlisted i {
-  color: #ff6b6b; /* 찜했을 때 하트 색상 */
+  color: #ff6b6b;
 }
 
 .wishlist-btn:hover {
@@ -177,10 +196,9 @@ const toggleWishlist = async () => {
   color: #ff6b6b;
 }
 
-/* 반응형 */
 @media (max-width: 768px) {
   .movie-card {
-    max-width: 180px; /* 모바일에서 카드 너비 조정 */
+    max-width: 180px;
   }
   .movie-title {
     font-size: 1.1rem;
@@ -192,7 +210,6 @@ const toggleWishlist = async () => {
   .wishlist-btn {
     width: 35px;
     height: 35px;
-    font-size: 1rem;
   }
 }
 </style>

@@ -8,17 +8,22 @@
           <h1 class="logo">MovieScope</h1>
           <p class="tagline">국내외 평점을 한눈에 비교하세요</p>
         </div>
-
         <SearchBar @search="handleSearch" />
-        </div>
-
+      </div>
       <div class="hero-background"></div>
     </section>
 
-    <main class="main-content">
+    <div v-if="movieStore.isLoading" class="loading-container">
+      <p>영화를 불러오는 중입니다...</p>
+      </div>
+    <div v-if="movieStore.error" class="error-container">
+      <p>오류가 발생했습니다: {{ movieStore.error }}</p>
+    </div>
+
+    <main class="main-content" v-if="!movieStore.isLoading && !movieStore.error">
       <section class="movie-section">
         <h2 class="section-title">오늘의 추천 영화</h2>
-        <MovieCarousel :movies="recommendedMovies" />
+        <MovieCarousel :movies="movieStore.recommendedMovies" />
       </section>
 
       <section class="movie-section">
@@ -28,7 +33,7 @@
             더보기 →
           </button>
         </div>
-        <MovieList :movies="domesticPopularMovies" :horizontal="true" />
+        <MovieList :movies="movieStore.domesticPopularMovies" :horizontal="true" />
       </section>
 
       <section class="movie-section">
@@ -38,7 +43,7 @@
             더보기 →
           </button>
         </div>
-        <MovieList :movies="internationalPopularMovies" :horizontal="true" />
+        <MovieList :movies="movieStore.internationalPopularMovies" :horizontal="true" />
       </section>
 
       <section class="movie-section">
@@ -48,13 +53,16 @@
             더보기 →
           </button>
         </div>
-        <MovieList :movies="latestMovies" :horizontal="true" />
+        <MovieList :movies="movieStore.latestMovies" :horizontal="true" />
       </section>
 
       <section class="movie-section">
         <h2 class="section-title">장르별 추천</h2>
-        <MovieGenreFilter @genre-selected="handleGenreFilter" />
-        <MovieList :movies="genreFilteredMovies" />
+        <MovieGenreFilter
+          :genres="movieStore.movieGenres"
+          @genre-selected="handleGenreFilter"
+        />
+        <MovieList :movies="movieStore.moviesByGenre" />
       </section>
     </main>
 
@@ -63,87 +71,70 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'; // useRouter 임포트 (더미가 아닌 실제 라우터 사용)
-// import { useMovieStore } from '@/stores/movies'
+import { onMounted } from 'vue'; // computed는 직접 사용하지 않으므로 제거
+import { useRouter } from 'vue-router';
+import { useMovieStore } from '@/stores/movie'; // 실제 스토어 임포트
 
-// 임시 라우터 및 스토어 (실제 구현 전까지 사용)
-// 이제 useRouter를 사용하므로 이 부분은 필요없습니다.
-// 하지만 다른 store mock은 유지합니다.
-const useMovieStore = () => ({
-  recommendedMovies: ref([]),
-  domesticPopularMovies: ref([]),
-  internationalPopularMovies: ref([]),
-  latestMovies: ref([]),
-  allMovies: ref([]),
-  getMoviesByGenre: (genre) => [],
-  fetchRecommendedMovies: () => { console.log('fetchRecommendedMovies called (stub)'); return Promise.resolve(); },
-  fetchPopularMovies: () => { console.log('fetchPopularMovies called (stub)'); return Promise.resolve(); },
-  fetchLatestMovies: () => { console.log('fetchLatestMovies called (stub)'); return Promise.resolve(); },
-});
+import AppHeader from '@/components/common/AppHeader.vue';
+import AppFooter from '@/components/common/AppFooter.vue';
+import SearchBar from '@/components/common/SearchBar.vue';
+import MovieCarousel from '@/components/movie/MovieCarousel.vue';
+import MovieList from '@/components/movie/MovieList.vue';
+import MovieGenreFilter from '@/components/movie/MovieGenreFilter.vue';
 
-const movieStore = useMovieStore();
-const router = useRouter(); // 실제 useRouter 사용
+const router = useRouter();
+const movieStore = useMovieStore(); // 실제 스토어 인스턴스 생성
 
-import AppHeader from '@/components/common/AppHeader.vue'
-import AppFooter from '@/components/common/AppFooter.vue'
-import SearchBar from '@/components/common/SearchBar.vue'
-// import GoogleLoginButton from '@/components/common/GoogleLoginButton.vue' // 제거
-import MovieCarousel from '@/components/movie/MovieCarousel.vue'
-import MovieList from '@/components/movie/MovieList.vue'
-import MovieGenreFilter from '@/components/movie/MovieGenreFilter.vue'
-
-// 반응형 데이터
-const selectedGenre = ref('')
-const isLoading = ref(true)
-
-// 컴퓨티드
-const recommendedMovies = computed(() => movieStore.recommendedMovies)
-const domesticPopularMovies = computed(() => movieStore.domesticPopularMovies)
-const internationalPopularMovies = computed(() => movieStore.internationalPopularMovies)
-const latestMovies = computed(() => movieStore.latestMovies)
-const genreFilteredMovies = computed(() => {
-  if (!selectedGenre.value) return movieStore.allMovies.value.slice(0, 8) 
-  return movieStore.getMoviesByGenre(selectedGenre.value)
-})
-
-// 메서드
+// --- Methods ---
 const handleSearch = (searchTerm) => {
   router.push({
-    name: 'Search',
-    query: { q: searchTerm }
-  })
-}
+    name: 'Search', // 라우트 이름 확인 필요
+    query: { q: searchTerm },
+  });
+};
 
 const navigateToCategory = (category) => {
   router.push({
-    name: 'Category',
-    params: { category }
-  })
-}
+    name: 'Category', // 라우트 이름 확인 필요
+    params: { category },
+  });
+};
 
-const handleGenreFilter = (genre) => {
-  selectedGenre.value = genre
-}
-
-// 생명주기
-onMounted(async () => {
-  try {
-    await Promise.all([
-      movieStore.fetchRecommendedMovies(),
-      movieStore.fetchPopularMovies(),
-      movieStore.fetchLatestMovies()
-    ])
-  } catch (error) {
-    console.error('Failed to fetch movie data:', error)
-  } finally {
-    isLoading.value = false
+// MovieGenreFilter에서 선택된 장르 ID를 받아서 스토어 액션 호출
+const handleGenreFilter = (genreId) => {
+  // genreId가 유효한 경우에만 호출 (예: null이나 undefined가 아닐 때)
+  if (genreId !== undefined) { // null도 유효한 값('전체' 선택)이므로 undefined만 체크
+    movieStore.fetchMoviesByGenre(genreId);
   }
-})
+};
+
+// --- Lifecycle Hooks ---
+onMounted(async () => {
+  // 데이터 로딩은 스토어 내부의 isLoading 상태로 관리됨
+  try {
+    // 여러 API 호출을 병렬로 실행
+    await Promise.all([
+      movieStore.fetchMovieGenres(), // 장르 목록 먼저 로드
+      movieStore.fetchRecommendedMovies(),
+      movieStore.fetchDomesticPopularMovies(),
+      movieStore.fetchInternationalPopularMovies(),
+      movieStore.fetchLatestMovies(),
+    ]);
+    // 초기 장르별 영화 목록: 사용자가 직접 장르를 선택하도록 moviesByGenre는 초기에 비워둠.
+    // 또는, 특정 기본 장르를 로드하고 싶다면 여기서 호출 가능.
+    // 예: if (movieStore.movieGenres.length > 0) {
+    //      movieStore.fetchMoviesByGenre(movieStore.movieGenres[0].id);
+    //    }
+  } catch (error) {
+    // 에러는 스토어에서 이미 처리하고 error 상태에 저장됨
+    console.error('HomeView: Failed to fetch initial movie data:', error);
+    // 필요한 경우 여기서 추가적인 UI 에러 처리를 할 수 있음
+  }
+});
 </script>
 
 <style scoped>
-/* 이전 스타일 유지 */
+/* 기존 스타일 유지 */
 .home-container {
   min-height: 100vh;
   background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
@@ -259,6 +250,21 @@ onMounted(async () => {
   transform: translateX(5px);
 }
 
+.loading-container,
+.error-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px; /* 로딩/에러 메시지 영역 확보 */
+  padding: 2rem;
+  text-align: center;
+  font-size: 1.2rem;
+}
+.error-container {
+  color: #ff6b6b; /* 에러 메시지 색상 */
+}
+
+
 @media (max-width: 768px) {
   .logo {
     font-size: 2.5rem;
@@ -284,14 +290,8 @@ onMounted(async () => {
   }
 }
 
-.loading-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 50vh;
-}
-
-::-webkit-scrollbar {
+/* 스크롤바 스타일은 전역으로 빼거나 App.vue에 두는 것이 좋습니다. */
+/* ::-webkit-scrollbar {
   width: 8px;
 }
 
@@ -306,5 +306,5 @@ onMounted(async () => {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
-}
+} */
 </style>
