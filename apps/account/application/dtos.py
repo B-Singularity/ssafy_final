@@ -13,7 +13,7 @@ class SocialLoginRequestDto:
         if not email:
             raise ValueError("이메일 정보는 필수입니다.")
         
-        self.provider = provider
+        self.provider = "google"
         self.id_token = id_token
         self.email = email
         self.nickname_suggestion = nickname_suggestion
@@ -46,8 +46,15 @@ class UserAccountDto:
         self.last_login_at = last_login_at
 
 class AuthResponseDto:
-    def __init__(self, access_token: str, user: UserAccountDto, is_new_user: bool = False):
+    def __init__(self, access_token, refresh_token, user, is_new_user=False):
         self.access_token = access_token
-        # self.refresh_token = refresh_token # 필요시 추가
+        self.refresh_token = refresh_token
         self.user = user
         self.is_new_user = is_new_user
+
+
+class LogoutRequestDto:
+    def __init__(self, refresh_token):
+        if not refresh_token:
+            raise ValueError("Refresh token은 필수입니다.")
+        self.refresh_token = refresh_token

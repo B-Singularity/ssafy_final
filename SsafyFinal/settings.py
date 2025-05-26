@@ -27,17 +27,20 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-
 # Application definition
 
 INSTALLED_APPS = [
-    'apps.account',
-    'apps.movie',
-    'apps.content_management',
-    'apps.notification',
-    'apps.personalization',
-    'apps.review_community',
+    'apps.account.apps.AccountsConfig',
+    'apps.movie.apps.MoviesConfig',
+    'apps.content_management.apps.ContentManagementConfig',
+    'apps.notification.apps.NotificationConfig',
+    'apps.personalization.apps.PersonalizationConfig',
+    'apps.review_community.apps.ReviewCommunityConfig',
+
     'rest_framework',
+    'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -45,6 +48,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 ]
+
+AUTH_USER_MODEL = 'account.Users'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -110,9 +115,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'ko-kr'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Seoul'
 
 USE_I18N = True
 
@@ -120,7 +125,7 @@ USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
+# https://docs.djangoproject.co    'SIGNING_KEY': SECRET_KEY,                     # 서명 키 (settings.SECRET_KEY 사용)m/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
 
@@ -128,3 +133,46 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+}
+
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60), # 액세스 토큰 유효 기간 (예: 30분)
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),    # 리프레시 토큰 유효 기간 (예: 7일)
+    'ROTATE_REFRESH_TOKENS': True,                 # 리프레시 토큰 사용 시 새 리프레시 토큰 발급 여부
+    'BLACKLIST_AFTER_ROTATION': True,              # 회전 시 이전 리프레시 토큰을 블랙리스트에 추가할지 여부
+    'UPDATE_LAST_LOGIN': True,                     # 토큰 발급/갱신 시 사용자의 last_login 필드 업데이트 여부
+
+    'ALGORITHM': 'HS256',                          # 서명 알고리즘
+    'SIGNING_KEY': SECRET_KEY,                     # 서명 키 (settings.SECRET_KEY 사용)
+    'VERIFYING_KEY': None,                         # 공개키 (비대칭 암호화 시 사용)
+    'AUDIENCE': None,                              # 토큰 대상자 (Audience)
+    'ISSUER': None,                                # 토큰 발급자 (Issuer)
+    'JWK_URL': None,                               # JSON Web Key Set URL
+    'LEEWAY': 0,                                   # 만료 시간 허용 오차 (초)
+
+    'AUTH_HEADER_TYPES': ('Bearer',),              # 인증 헤더 타입 (일반적으로 'Bearer')
+    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',      # 인증 헤더 이름
+    'USER_ID_FIELD': 'id',                         # 사용자 모델에서 사용자 ID를 나타내는 필드명 (Users 모델의 PK)
+    'USER_ID_CLAIM': 'user_id',                    # JWT 클레임에 포함될 사용자 ID의 이름
+    'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule', # 사용자 인증 규칙
+
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',), # 사용할 액세스 토큰 클래스
+    'TOKEN_TYPE_CLAIM': 'token_type',              # 토큰 타입을 나타내는 클레임 이름
+    'TOKEN_USER_CLASS': 'rest_framework_simplejwt.models.TokenUser', # 토큰으로부터 생성될 사용자 클래스
+
+    'JTI_CLAIM': 'jti',                            # JWT ID 클레임 이름 (토큰 고유 식별자)
+
+    'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp', # 슬라이딩 토큰 사용 시 리프레시 만료 클레임
+    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),    # 슬라이딩 토큰 액세스 토큰 유효 기간
+    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1), # 슬라이딩 토큰 리프레시 토큰 유효 기간
+
+    # 아래는 선택적 설정 (커스텀 클레임 등)
+    # 'CLAIMS_SERIALIZER': 'path.to.MyTokenClaimsSerializer',
+}

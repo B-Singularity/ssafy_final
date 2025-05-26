@@ -3,6 +3,7 @@ from apps.account.application.dtos import UserSocialLinkDto, UserAccountDto
 
 
 class SocialLoginRequestSerializer(serializers.Serializer):
+    provider = serializers.CharField()
     id_token = serializers.CharField(required=True)
     email = serializers.EmailField(required=True)
     nickname_suggestion = serializers.CharField(required=False, allow_blank=True, max_length=15, allow_null=True)
@@ -24,5 +25,9 @@ class UserAccountResponseSerializer(serializers.Serializer):
 
 class AuthResponseSerializer(serializers.Serializer):
     access_token = serializers.CharField()
+    refresh_token = serializers.CharField()
     user = UserAccountResponseSerializer()
     is_new_user = serializers.BooleanField()
+
+class LogoutRequestSerializer(serializers.Serializer):
+    refresh_token = serializers.CharField(required=True)
