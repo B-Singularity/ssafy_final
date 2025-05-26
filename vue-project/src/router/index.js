@@ -1,8 +1,16 @@
 import path from 'node:path';
 import { createRouter, createWebHistory } from 'vue-router';
+import HomeView from '@/views/HomeView.vue';
+import LoginPage from '@/views/LoginPage.vue';
+import MyPage from '@/views/MyPage.vue'; // 마이페이지 임포트
+import WishlistView from '@/views/WishlistView.vue'; // 찜 목록 임포트
+import NotificationSettings from '@/views/NotificationSettings.vue'; // 알림 설정 임포트
 
-// 페이지 컴포넌트들은 보통 동적 임포트(dynamic import)를 사용하여 코드 스플리팅을 합니다.
-// 이렇게 하면 해당 페이지에 처음 접근할 때만 코드를 불러옵니다.
+// 임시 페이지 컴포넌트들 (존재하지 않으면 오류가 나므로, 실제 파일을 생성해주세요)
+import CategoryPage from '@/views/CategoryPage.vue';
+import SearchPage from '@/views/SearchPage.vue';
+import NotFoundPage from '@/views/NotFoundPage.vue';
+
 
 const routes = [
   {
