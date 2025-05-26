@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta # SIMPLE_JWT 설정에 필요
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +21,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-dttekv%unyflha$!18v)xs!*t)b8*v-wz+t(*=!de4w=wv75q^'
+SECRET_KEY = 'django-insecure-dttekv%unyflha$!18v)xs!*t)b8*v-wz+t(*=!de4w=wv75q^' # 실제 프로덕션에서는 이 키를 안전하게 관리해야 합니다.
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [] # 프로덕션 환경에서는 실제 도메인/IP를 추가해야 합니다.
+
 
 # Application definition
 
@@ -40,6 +42,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
+    'corsheaders', # CORS (Cross-Origin Resource Sharing) 처리
 
     'django.contrib.admin',
     'django.contrib.auth',
@@ -49,9 +52,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 ]
 
-AUTH_USER_MODEL = 'account.Users'
+AUTH_USER_MODEL = 'account.Users' # 사용자 정의 User 모델 지정
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware', # 가능한 가장 위에 위치
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -66,11 +70,11 @@ ROOT_URLCONF = 'SsafyFinal.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates']
-        ,
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
@@ -125,7 +129,7 @@ USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.co    'SIGNING_KEY': SECRET_KEY,                     # 서명 키 (settings.SECRET_KEY 사용)m/en/5.2/howto/static-files/
+# https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
 
@@ -134,16 +138,19 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Django REST framework 설정
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    ),
+    # 'DEFAULT_PERMISSION_CLASSES': [ # API 전역 권한 설정 (필요시 주석 해제 및 수정)
+    #     'rest_framework.permissions.IsAuthenticated',
+    # ]
 }
 
-from datetime import timedelta
-
+# Simple JWT 설정
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60), # 액세스 토큰 유효 기간 (예: 30분)
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60), # 액세스 토큰 유효 기간 (예: 1시간)
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),    # 리프레시 토큰 유효 기간 (예: 7일)
     'ROTATE_REFRESH_TOKENS': True,                 # 리프레시 토큰 사용 시 새 리프레시 토큰 발급 여부
     'BLACKLIST_AFTER_ROTATION': True,              # 회전 시 이전 리프레시 토큰을 블랙리스트에 추가할지 여부
@@ -172,7 +179,20 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp', # 슬라이딩 토큰 사용 시 리프레시 만료 클레임
     'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),    # 슬라이딩 토큰 액세스 토큰 유효 기간
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1), # 슬라이딩 토큰 리프레시 토큰 유효 기간
-
-    # 아래는 선택적 설정 (커스텀 클레임 등)
-    # 'CLAIMS_SERIALIZER': 'path.to.MyTokenClaimsSerializer',
 }
+
+# CORS 설정 (Cross-Origin Resource Sharing)
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5173',  # Vue.js 개발 서버 주소 (Vite 기본값, 실제 사용하는 포트로 변경)
+    'http://127.0.0.1:5173',
+]
+# 만약 Vue.js 개발 서버가 다른 포트를 사용한다면 해당 포트를 추가해야 합니다.
+# 프로덕션 환경에서는 실제 프론트엔드 도메인을 추가합니다.
+# 예: 'https://your-frontend-domain.com'
+
+# CORS_ALLOW_CREDENTIALS = True # 쿠키 기반 인증 시 필요할 수 있음 (JWT에서는 보통 False)
+# CORS_ALLOW_ALL_ORIGINS = False # True로 설정하면 모든 출처를 허용 (개발 중 테스트 용도, 보안에 유의)
+
+# Google OAuth Client ID (백엔드에서 토큰 검증 시 필요할 수 있음)
+GOOGLE_CLIENT_ID = "24120708973-o7fr06vmr3qdhvf6h6mb6mjp3gfhttim.apps.googleusercontent.com"
+# 이 ID는 환경 변수로 관리하는 것이 좋습니다. (예: os.environ.get('GOOGLE_CLIENT_ID'))
